@@ -2,7 +2,7 @@ import { WebSocketServer } from 'ws';
 import { clients } from './controllers/projectController.js';
 
 // Mudando a porta para 8080 (caso queira que seja a mesma do WebSocket no cliente)
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 8080, host: '0.0.0.0' });
 
 wss.on('connection', (ws, req) => {
     // Obtém o parâmetro 'project' da URL

@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { clients } from './controllers/projectController.js';
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 3000 });
 
 wss.on('connection', (ws, req) => {
     const name = new URL(req.url, `http://${req.headers.host}`)

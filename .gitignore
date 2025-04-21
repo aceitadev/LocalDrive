@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.pnpm-debug.log*
+
+# Electron build artifacts
+/dist/
+out/
+build/
+release/
+*.asar
+
+# Diretório de cache do Electron
+.electron/
+
+# Arquivos temporários do sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Configurações de editores
+.vscode/
+.idea/
+
+# Windows
+ehthumbs.db
+Icon?

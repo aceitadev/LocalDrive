@@ -5,14 +5,11 @@ import { clients } from './controllers/projectController.js';
 const wss = new WebSocketServer({ port: 8080, host: '0.0.0.0' });
 
 wss.on('connection', (ws, req) => {
-    // Obtém o parâmetro 'project' da URL
     const name = new URL(req.url, `http://${req.headers.host}`).searchParams.get('project');
 
-    // Verifica se o nome do projeto existe em 'clients'
     const proc = clients[name];
 
     if (!proc) {
-        // Se o processo não estiver em execução, envia erro e fecha a conexão
         ws.send(`[Erro] Processo '${name}' não está em execução.`);
         ws.close();
         return;

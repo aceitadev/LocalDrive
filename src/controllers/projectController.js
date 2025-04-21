@@ -25,7 +25,7 @@ export const list = (req, res) => {
 
         return res.json({ success: true, projects });
     } catch (err) {
-        console.error('Error listing projects:', err);
+        console.error('Erro ao listar projetos:', err);
         return res.status(500).json({ error: 'Falha ao listar projetos' });
     }
 };
@@ -34,6 +34,7 @@ export const create = (req, res) => {
     const { name, description, startCommand } = req.body;
     const projectDir = path.join(PROJECTS_BASE, name);
     const sourceDir = path.join(projectDir, 'source');
+
     try {
         fs.mkdirSync(sourceDir, { recursive: true });
         fs.writeFileSync(
@@ -42,14 +43,39 @@ export const create = (req, res) => {
         );
         return res.json({ success: true });
     } catch (err) {
-        console.error('Error creating project:', err);
+        console.error('Erro ao criar projeto:', err);
         return res.status(500).json({ error: 'Falha ao criar projeto' });
     }
 };
 
+export const deleteProject = (req, res) => {
+    const name = req.params.name;
+    const projectDir = path.join(PROJECTS_BASE, name);
+
+    try {
+        if (!fs.existsSync(projectDir)) {
+            return res.status(404).json({ error: 'Projeto não encontrado' });
+        }
+
+        if (clients[name]) {
+            clients[name].process.kill();
+            delete clients[name];
+        }
+
+        fs.rmSync(projectDir, { recursive: true, force: true });
+
+        return res.json({ success: true, message: 'Projeto deletado com sucesso' });
+    } catch (err) {
+        console.error(`Erro ao deletar projeto '${name}':`, err);
+        return res.status(500).json({ error: 'Falha ao deletar projeto' });
+    }
+};
+
+
 export const upload = (req, res) => {
     const name = req.params.name;
     const file = req.file;
+
     if (!file) return res.status(400).json({ error: 'Arquivo não enviado' });
 
     const ext = path.extname(file.originalname).toLowerCase();
@@ -88,19 +114,43 @@ export const upload = (req, res) => {
 export const start = (req, res) => {
     const name = req.params.name;
     const projectDir = path.join(PROJECTS_BASE, name);
-    const projectSorceDir = path.join(PROJECTS_BASE, name + '/source');
-    const info = JSON.parse(
-        fs.readFileSync(path.join(projectDir, 'infos.json'))
-    );
-    const proc = spawn(info.startCommand, { cwd: projectSorceDir, shell: true });
-    clients[name] = { pid: proc.pid, startTime: Date.now(), process: proc };
-    return res.json({ success: true, pid: proc.pid });
+    const sourceDir = path.join(projectDir, 'source');
+
+    try {
+        const info = JSON.parse(
+            fs.readFileSync(path.join(projectDir, 'infos.json'))
+        );
+
+        const proc = spawn(info.startCommand, { cwd: sourceDir, shell: true });
+
+        proc.stdout.on('data', (data) => {
+            // optionally capture output
+        });
+
+        proc.stderr.on('data', (data) => {
+            // optionally capture errors
+        });
+
+        proc.on('close', (code) => {
+            delete clients[name];
+        });
+
+        clients[name] = { pid: proc.pid, startTime: Date.now(), process: proc };
+        return res.json({ success: true, pid: proc.pid });
+    } catch (err) {
+        console.error(`Erro ao iniciar projeto '${name}':`, err);
+        return res.status(500).json({ error: 'Falha ao iniciar projeto' });
+    }
 };
 
 export const stop = (req, res) => {
     const name = req.params.name;
     const client = clients[name];
-    if (!client) return res.status(400).json({ error: 'Projeto não está em execução' });
+
+    if (!client) {
+        return res.status(400).json({ error: 'Projeto não está em execução' });
+    }
+
     client.process.kill();
     delete clients[name];
     return res.json({ success: true });
@@ -109,7 +159,10 @@ export const stop = (req, res) => {
 export const status = (req, res) => {
     const name = req.params.name;
     const proc = clients[name];
-    if (!proc) return res.json({ status: 'offline' });
+
+    if (!proc) {
+        return res.json({ status: 'offline' });
+    }
 
     const uptimeSeconds = Math.floor((Date.now() - proc.startTime) / 1000);
     return res.json({

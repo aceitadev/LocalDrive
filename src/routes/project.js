@@ -8,6 +8,7 @@ const upload = multer({ dest: path.join(process.cwd(), 'uploads') });
 
 router.get('/list', controller.list);
 router.post('/create', controller.create);
+router.delete('/:name', controller.deleteProject);
 router.post('/:name/upload', upload.single('file'), controller.upload);
 router.post('/:name/start', controller.start);
 router.post('/:name/stop', controller.stop);

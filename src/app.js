@@ -16,6 +16,6 @@ fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 app.use('/project', projectRoutes);
 
-app.listen(3000, '2804:8808:8:234:661c:67ff:fe97:7caf', () => {
-    console.log('Server running in http://[2804:8808:8:234:661c:67ff:fe97:7caf]:3000');
+app.listen(3000, 'localhost', () => {
+    console.log('Server running in localhost');
 });
